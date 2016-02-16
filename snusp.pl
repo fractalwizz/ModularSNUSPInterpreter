@@ -7,17 +7,18 @@ my @tape;
 my @stack;
 my @proptr = (0,0);
 
-my $buffer = "";
 my $bail = 1;
 my $dir = 0;
 my $memptr = 0;
 
+# initialization
 my $file = shift;
 my $width = calcwidth($file);
 
 @prog = process($file, $width);
 @proptr = startpos();
 
+# program execution
 while ($bail) {
     my $char = $prog[$proptr[0]][$proptr[1]];
     
@@ -40,17 +41,22 @@ while ($bail) {
                          $bail--;
                      }
                                                                   }
+        when ('\n'){ $bail--;                                     }
     }
     
     moveptr($dir, @proptr);
     
+    # out-of-bounds detection
     if ($proptr[0] < 0 || $proptr[0] > $width ||
         $proptr[1] < 0 || $proptr[1] > $width  )
     {
-        print "Program Termination: Boundary\n";
+        print "\nProgram Termination: Boundary\n";
         last;
     }
 }
+
+print "\nProgram Termination: # on empty stack\n";
+exit(0);
 
 #==================SUBROUTINES==========================
 
@@ -64,20 +70,24 @@ while ($bail) {
 sub shiftright { $memptr++; }
 
 ##\
- # Shifts memptr left unless at the left end of tape
+ # Shifts memptr left (if it can)
  #/
 sub shiftleft { unless ($memptr == 0) { $memptr--; } }
 
 ##\
- # Increments value of cell at memptr
+ # Increments value in cell at memptr
  #/
 sub increment { $tape[$memptr]++; }
 
 ##\
- # Decrements value of cell at memptr
+ # Decrements value in cell at memptr
  #/
 sub decrement { $tape[$memptr]--; }
 
+##\
+ # Requests input from User
+ # Saves input as dec to cell at memptr 
+ #/
 sub input {
     my $val;
     
@@ -86,36 +96,24 @@ sub input {
     $tape[$memptr] = ord $val;
 }
 
-sub inputa {
-    my $val;
-    
-    if ($buffer) {
-        $val = ord substr($buffer, 0, 1);
-        $tape[$memptr] = $val;
-        $buffer = substr($buffer, 1);
-    } else {
-        print "?";
-        $val = <>;
-
-        if (not defined $val) {
-            print "ERROR: input not found";
-        } else {
-            $buffer = $val . chr(0);
-            $val = ord substr($buffer, 0, 1);
-            $buffer = substr($buffer, 1);
-
-            $tape[$memptr] = $val;
-        }
-    }
-}
-
+##\
+ # Prints ASCII value of cell at memptr
+ #/
 sub output { print chr $tape[$memptr]; }
 
+##\
+ # Mirrors direction for '\'
+ # r->d, d->r, l->u, u->l
+ #
+ # param: $dir: current execution direction
+ #
+ # return: $out: new execution direction
+ #/
 sub lurd {
-    my ($ptr) = @_;
+    my ($dir) = @_;
     my $out;
     
-    for ($ptr) {
+    for ($dir) {
         when (0) { $out = 1; }
         when (1) { $out = 0; }
         when (2) { $out = 3; }
@@ -125,11 +123,19 @@ sub lurd {
     return $out;
 }
 
+##\
+ # Mirrors direction for '/'
+ # r->u, d->l, l->d, u->r
+ #
+ # param: $dir: current execution direction
+ #
+ # return: $out: new execution direction
+ #/
 sub ruld {
-    my ($ptr) = @_;
+    my ($dir) = @_;
     my $out;
     
-    for ($ptr) {
+    for ($dir) {
         when (0) { $out = 3; }
         when (1) { $out = 2; }
         when (2) { $out = 1; }
@@ -139,6 +145,15 @@ sub ruld {
     return $out;
 }
 
+#----------------------------
+#-----------Util-------------
+#----------------------------
+
+##\
+ # Given direction, gets position of next instruction
+ #
+ # param: $dir: current execution direction
+ #/
 sub moveptr {
     my ($dir) = @_;
     
@@ -150,6 +165,12 @@ sub moveptr {
     }
 }
 
+##\
+ # Determines the starting position for execution
+ #
+ # return: @out:  position of '$' (if '$' exists)
+ # return: @left: position of upper left instruction (if '$' doesn't exist)
+ #/
 sub startpos {
     my @left;
     my @out;
@@ -167,6 +188,12 @@ sub startpos {
     return (@out) ? @out : @left;
 }
 
+##\
+ # File converted to 2D array of characters (program instructions)
+ # all lines spaced to same width (avoids array index bugs)
+ #
+ # return: @out: 2D array of characters in the program
+ #/
 sub process {
     my ($file, $width) = @_;
     my @out;
@@ -192,6 +219,13 @@ sub process {
     return @out;
 }
 
+##\
+ # Calculates the width of input program file
+ #
+ # param: $file: name of input program file
+ #
+ # return: $out: width of input program file
+ #/
 sub calcwidth {
     my ($file) = @_;
     my $out = 0;
