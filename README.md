@@ -23,7 +23,6 @@ Supports any text file with valid SNUSP code<br>
 Modular capabilites (subroutines)<br>
 
 ### TODO
-Optimization / Restructure of subroutine code<br>
 Cmd parameter for memory cell storage (overflow 255->0 or unlimited)<br>
 Cmd parameter for memory tape length (default: unlimited)<br>
 Cmd parameter for trace information of each step<br>

@@ -23,35 +23,35 @@ while ($bail) {
     my $char = $prog[$proptr[0]][$proptr[1]];
     
     for ($char) {
-        when ('>') { shiftright();                                }
-        when ('<') { shiftleft();                                 }
-        when ('+') { increment();                                 }
-        when ('-') { decrement();                                 }
-        when (',') { input();                                     }
-        when ('.') { output();                                    }
-        when ('\\'){ $dir = lurd($dir);                           }
-        when ('/') { $dir = ruld($dir);                           }
-        when ('!') { moveptr($dir, @proptr);                      }
-        when ('?') { moveptr($dir, @proptr) if (!$tape[$memptr]); }
-        when ('@') { push(@stack, [$dir, @proptr]);               }
+        when ('>') { shiftright();                       }
+        when ('<') { shiftleft();                        }
+        when ('+') { increment();                        }
+        when ('-') { decrement();                        }
+        when (',') { input();                            }
+        when ('.') { output();                           }
+        when ('\\'){ $dir = lurd($dir);                  }
+        when ('/') { $dir = ruld($dir);                  }
+        when ('!') { moveptr($dir);                      }
+        when ('?') { moveptr($dir) if (!$tape[$memptr]); }
+        when ('@') { push(@stack, [$dir, @proptr]);      }
         when ('#') { if (@stack) {
                          ($dir, @proptr) = @{pop @stack};
-                         moveptr($dir, @proptr);
+                         moveptr($dir);
                      } else {
                          $bail--;
                      }
-                                                                  }
-        when ('\n'){ $bail--;                                     }
+                                                         }
+        when ('\n'){ $bail--;                            }
     }
     
-    moveptr($dir, @proptr);
+    moveptr($dir);
     
     # out-of-bounds detection
     if ($proptr[0] < 0 || $proptr[0] > $width ||
         $proptr[1] < 0 || $proptr[1] > $width  )
     {
         print "\nProgram Termination: Boundary\n";
-        last;
+        exit(0);
     }
 }
 
@@ -89,10 +89,8 @@ sub decrement { $tape[$memptr]--; }
  # Saves input as dec to cell at memptr 
  #/
 sub input {
-    my $val;
-    
     print "?";
-    chomp($val = <>);
+    chomp(my $val = <>);
     $tape[$memptr] = ord $val;
 }
 
@@ -107,20 +105,13 @@ sub output { print chr $tape[$memptr]; }
  #
  # param: $dir: current execution direction
  #
- # return: $out: new execution direction
+ # return: equ: new execution direction
  #/
 sub lurd {
     my ($dir) = @_;
-    my $out;
+    my $out = ($dir >= 2) ? 2 : -2;
     
-    for ($dir) {
-        when (0) { $out = 1; }
-        when (1) { $out = 0; }
-        when (2) { $out = 3; }
-        when (3) { $out = 2; }
-    }
-    
-    return $out;
+    return (3 - $dir) + $out;
 }
 
 ##\
@@ -129,20 +120,11 @@ sub lurd {
  #
  # param: $dir: current execution direction
  #
- # return: $out: new execution direction
+ # return: equ: new execution direction
  #/
 sub ruld {
     my ($dir) = @_;
-    my $out;
-    
-    for ($dir) {
-        when (0) { $out = 3; }
-        when (1) { $out = 2; }
-        when (2) { $out = 1; }
-        when (3) { $out = 0; }
-    }
-    
-    return $out;
+    return abs($dir - 3);
 }
 
 #----------------------------
@@ -175,8 +157,8 @@ sub startpos {
     my @left;
     my @out;
 
-    for my $a(0 .. @prog - 1) {
-        for my $b(0 .. @{$prog[0]} - 1) {
+    for my $a (0 .. @prog - 1) {
+        for my $b (0 .. @{$prog[0]} - 1) {
             if (!@left && $prog[$a][$b] =~ m/[\>\<\+\-\.\,\\\/\!\?\@\#\=\|\$\n]/) {
                 @left = ($a, $b);
             }
@@ -199,12 +181,12 @@ sub process {
     my @out;
     my $i = 0;
     
-    open(FILE, '<', $file) or die("Can't open $file: $!\n");
+    open (FILE, '<', $file) or die ("Can't open $file: $!\n");
     
     while (<FILE>) {
         chomp(my $str = $_);
         
-        $str .= ' ' x ($width - length($str)) . "\n";
+        $str .= ' ' x ($width - length $str) . "\n";
         my $tmp = $str;
         
         for (0 .. length($tmp) - 1) {
@@ -216,6 +198,7 @@ sub process {
         $i++;
     }
     
+    close (FILE);
     return @out;
 }
 
@@ -230,7 +213,7 @@ sub calcwidth {
     my ($file) = @_;
     my $out = 0;
     
-    open(FILE, '<', $file) or die("Can't open $file: $!\n");
+    open (FILE, '<', $file) or die ("Can't open $file: $!\n");
     
     while (<FILE>) {
         chomp(my $str = $_);
