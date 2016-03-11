@@ -1,6 +1,6 @@
 ## Modular SNUSPInterpreter
 Interpreter for the Modular SNUSP language written in Perl<br>
-V0.8
+V0.9
 
 ### Disclaimer
 Fractalwizz is not the author of any of the example programs.<br>
@@ -10,21 +10,23 @@ They are only provided to test the interpreter's functionality
 Modern::Perl
 
 ### Usage
-perl snusp.pl inputFile<br>
-  inputFile: path of file<br>
+perl snusp.pl [options] inputFile<br>
+  -s:        Tape Cell Storage (255 overflow) (default: unlimited)<br>
+  -l [int]:  Tape Length (default: unlimited)<br>
+  inputFile: path of file
   
 ie:<br>
 perl snusp.pl ./Examples/ackermann.snusp<br>
-perl snusp.pl multiply.snusp
+perl snusp.pl -s multiply.snusp
 
 ### Features
 SNUSP Esoteric Programming Language<br>
 Supports any text file with valid SNUSP code<br>
 Modular capabilites (subroutines)<br>
+Define Memory Tape Length Constraint (Cmd parameter)<br>
+Define Memory Tape Cell Storage Constraint (Cmd parameter)
 
 ### TODO
-Cmd parameter for memory cell storage (overflow 255->0 or unlimited)<br>
-Cmd parameter for memory tape length (default: unlimited)<br>
 Cmd parameter for trace information of each step<br>
 Cmd parameter for advanced trace (diagram + pointer visualization)
 

@@ -1,11 +1,18 @@
 #!/usr/bin/perl
 use Modern::Perl;
 use Data::Dumper;
+use Getopt::Std;
+use File::Basename;
+no warnings 'experimental::smartmatch';
 
 my @prog;
 my @tape;
 my @stack;
 my @proptr = (0,0);
+my %opt = ();
+
+# cmd parameters
+getopts('sl:', \%opt);
 
 my $bail = 1;
 my $dir = 0;
@@ -13,6 +20,26 @@ my $memptr = 0;
 
 # initialization
 my $file = shift;
+
+if (!$file) {
+    my $prog = basename($0);
+    
+    print "USAGE\n";
+    print "  $prog [options] textfile\n\n";
+    print "DESCRIPTION\n";
+    print "  Modular SNUSP Interpreter written in Perl\n\n";
+    print "OPTIONS\n";
+    print "  -s        Tape Cell Storage cap at 255 (overflow) (default: unlimited)\n";
+    print "  -l [int]  Tape Length (default: unlimited)\n\n";
+    print "OPERANDS\n";
+    print "  textfile  path to input text file\n\n";
+    print "FILES\n";
+    print "EXAMPLES\n";
+    print "  $prog -l 256 ./Examples/48a.snusp\n";
+    print "  $prog -s echo2.snusp\n";
+    exit(1);
+}
+
 my $width = calcwidth($file);
 
 @prog = process($file, $width);
@@ -67,22 +94,37 @@ exit(0);
 ##\
  # Shifts memptr right
  #/
-sub shiftright { $memptr++; }
+sub shiftright {
+	$memptr++;
+	if ($opt{l} && $memptr == $opt{l}) { $memptr = 0; }
+}
 
 ##\
  # Shifts memptr left (if it can)
  #/
-sub shiftleft { unless ($memptr == 0) { $memptr--; } }
+sub shiftleft {
+	if ($memptr == 0) {
+        if ($opt{l}) { $memptr = $opt{l} - 1; }
+    } else {
+        $memptr--;
+    }
+}
 
 ##\
  # Increments value in cell at memptr
  #/
-sub increment { $tape[$memptr]++; }
+sub increment {
+	$tape[$memptr]++;
+	if ($opt{s} && $tape[$memptr] > 255) { $tape[$memptr] = 0; }
+}
 
 ##\
  # Decrements value in cell at memptr
  #/
-sub decrement { $tape[$memptr]--; }
+sub decrement {
+	$tape[$memptr]--;
+	if ($opt{s} && $tape[$memptr] < 0) { $tape[$memptr] = 255; }
+}
 
 ##\
  # Requests input from User
